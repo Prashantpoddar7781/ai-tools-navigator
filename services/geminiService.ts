@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import type { Tool } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 export const suggestTool = async (taskDescription: string, allTools: Tool[]): Promise<string> => {
   const toolList = allTools.map(tool => `- ${tool.name}: ${tool.description}`).join('\n');
