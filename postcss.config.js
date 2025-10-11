@@ -1,10 +1,7 @@
-// PostCSS config for Tailwind CSS v4 with Vite (ESM)
-// Uses the official @tailwindcss/postcss plugin
+// postcss.config.js
+import tailwindcss from '@tailwindcss/postcss';
+import autoprefixer from 'autoprefixer';
+
 export default {
-  plugins: {
-    '@tailwindcss/postcss': {},
-    autoprefixer: {},
-  },
+  plugins: [tailwindcss, autoprefixer],
 };
-
-

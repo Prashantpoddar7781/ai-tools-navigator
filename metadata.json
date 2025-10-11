@@ -1,0 +1,5 @@
+{
+  "name": "AI Tool Directory",
+  "description": "A curated marketplace for discovering AI tools, featuring a tool finder, personal stack management, and an AI-powered tool suggester.",
+  "requestFramePermissions": []
+}

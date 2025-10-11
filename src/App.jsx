@@ -10,15 +10,15 @@ import {
   Clock,
 } from "lucide-react";
 
-import Header from "./header.jsx";
-import Sidebar from "./sidebar.jsx";
-import SearchBar from "./searchbar.jsx";
-import ToolCard from "./toolcard.jsx";
+import Header from "./Header.jsx";
+import Sidebar from "./Sidebar.jsx";
+import SearchBar from "./SearchBar.jsx";
+import ToolCard from "./ToolCard.jsx";
 import ToolDetailsModal from "./ToolDetailsModal.jsx";
-import ErrorBoundary from "./errorboundary.jsx";
-import { useStore } from "./storecontext.jsx";
-import Login from "./Login.jsx";
-import LoadingSpinner from "./LoadingSpinner.jsx";
+import ErrorBoundary from "./ErrorBoundary.jsx"; // match filename
+import { useStore } from "./storecontext.jsx"; // ✅ correct path
+import Login from "./Login.jsx"; // ✅ login form
+import LoadingSpinner from "./LoadingSpinner.jsx"; // ✅ spinner
 
 function App() {
   // -------------------- Global State --------------------

@@ -1,7 +1,7 @@
 // src/Sidebar.jsx
 import React from "react";
 import { X } from "lucide-react";
-import StackSection from "./Stacksection.jsx"; // ✅ fixed casing
+import StackSection from "./StackSection.jsx"; // ✅ fixed casing
 import { useStore } from "./storecontext.jsx"; // ✅ same folder
 
 function Sidebar({ categories, sidebarOpen, setSidebarOpen }) {
