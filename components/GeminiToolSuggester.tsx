@@ -77,10 +77,13 @@ const GeminiToolSuggester: React.FC = () => {
             id="task-description"
             value={task}
             onChange={(e) => setTask(e.target.value)}
-            placeholder="e.g., 'I need to create a short, cinematic video clip from a text description for my social media.'"
+            placeholder="e.g., 'I want to create a professional marketing campaign for my new product, including social media posts, a landing page, and promotional videos.'"
             className="w-full h-24 p-2 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             disabled={isLoading}
           />
+          <div className="mt-2 text-xs text-slate-400">
+            💡 <strong>Examples:</strong> "Create a mobile app prototype", "Write a technical blog post", "Design a company logo", "Build an e-commerce website", "Create a video tutorial"
+          </div>
           <button
             type="submit"
             disabled={isLoading || !task.trim()}
@@ -97,13 +100,27 @@ const GeminiToolSuggester: React.FC = () => {
                 {isLoading && !response && (
                     <div className="flex items-center justify-center gap-3 text-slate-400">
                         <Spinner />
-                        <span>Finding the best tool for you...</span>
+                        <span>Analyzing your task and creating a step-by-step workflow...</span>
                     </div>
                 )}
                 {error && <p className="text-red-400">{error}</p>}
                 {response && (
-                    <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
-                      {response}
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      <div 
+                        className="whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{
+                          __html: response
+                            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-400">$1</strong>')
+                            .replace(/### (.*)/g, '<h3 class="text-xl font-bold text-white mt-6 mb-3 border-b border-slate-600 pb-2">$1</h3>')
+                            .replace(/## (.*)/g, '<h2 class="text-2xl font-bold text-cyan-400 mt-8 mb-4">$1</h2>')
+                            .replace(/\*\*Tool:\*\* (.*)/g, '<div class="bg-slate-800 p-3 rounded-lg my-2"><strong class="text-cyan-400">Tool:</strong> <span class="text-white font-semibold">$1</span></div>')
+                            .replace(/\*\*Why:\*\* (.*)/g, '<div class="text-slate-300 mb-2"><strong class="text-green-400">Why:</strong> $1</div>')
+                            .replace(/\*\*Time:\*\* (.*)/g, '<div class="text-slate-300 mb-2"><strong class="text-yellow-400">Time:</strong> $1</div>')
+                            .replace(/\*\*Tips:\*\* (.*)/g, '<div class="text-slate-300 mb-4"><strong class="text-purple-400">Tips:</strong> $1</div>')
+                            .replace(/- (.*)/g, '<li class="text-slate-300 mb-1">$1</li>')
+                            .replace(/\n/g, '<br>')
+                        }}
+                      />
                     </div>
                 )}
               </div>

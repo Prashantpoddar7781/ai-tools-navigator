@@ -1,28 +1,68 @@
 import { GoogleGenAI } from "@google/genai";
 import type { Tool } from '../types';
+import { CATEGORIES } from '../constants';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 export const suggestTool = async (taskDescription: string, allTools: Tool[]): Promise<string> => {
-  const toolList = allTools.map(tool => `- ${tool.name}: ${tool.description}`).join('\n');
+  // Create a more structured tool list with categories
+  const toolList = allTools.map(tool => {
+    const category = CATEGORIES.find(cat => 
+      cat.subCategories.some(sub => sub.tools.includes(tool))
+    );
+    const subCategory = category?.subCategories.find(sub => 
+      sub.tools.includes(tool)
+    );
+    return `- **${tool.name}** (${category?.name} > ${subCategory?.name}): ${tool.description}`;
+  }).join('\n');
 
   const prompt = `
-You are an expert AI workflow consultant. A user needs to accomplish a complex task and wants a recommended sequence of AI tools to use.
+You are an expert AI workflow consultant specializing in creating comprehensive, step-by-step workflows for complex tasks using AI tools.
 
-User's Task: "${taskDescription}"
+**User's Task:** "${taskDescription}"
 
-Based on this task, analyze the following list of available tools. Recommend a complete workflow or sequence of tools that would help the user accomplish their goal from start to finish.
+**Your Mission:** Create a detailed, sequential workflow that breaks down this task into logical steps, recommending the best AI tool for each step from the available tools below.
 
-- For each step in the workflow, recommend a specific tool from the list.
-- Explain WHY you are recommending that tool for that specific step.
-- Present the workflow as a series of numbered steps in markdown format.
-- If a single tool can handle multiple steps, mention that.
-- If no perfect tool exists for a step, suggest the closest alternative and explain its limitations.
+**Instructions:**
+1. Analyze the task and break it down into 3-7 logical steps
+2. For each step, recommend the BEST tool from the list below
+3. Explain WHY that specific tool is perfect for that step
+4. Include alternative tools if the primary choice isn't available
+5. Consider the logical flow - some steps must come before others
+6. Mention any prerequisites or preparation needed
+7. Include estimated time for each step
+8. Suggest tips for getting the best results
 
-Available Tools:
+**Format your response as follows:**
+
+## 🎯 **AI Workflow for: [Task Summary]**
+
+### **Step 1: [Step Name]**
+**Tool:** [Tool Name] (Category: [Category Name])
+**Why:** [Detailed explanation of why this tool is perfect for this step]
+**Time:** [Estimated time]
+**Tips:** [Specific tips for best results]
+
+### **Step 2: [Step Name]**
+**Tool:** [Tool Name] (Category: [Category Name])
+**Why:** [Detailed explanation]
+**Time:** [Estimated time]
+**Tips:** [Specific tips]
+
+[Continue for all steps...]
+
+### **🔄 Alternative Workflow** (if applicable)
+[If there are multiple valid approaches, suggest an alternative]
+
+### **💡 Pro Tips**
+- [General tips for the entire workflow]
+- [Common pitfalls to avoid]
+- [How to optimize results]
+
+**Available Tools:**
 ${toolList}
 
-Your recommendation should be formatted in simple markdown. Start with a headline like "### Recommended AI Workflow".
+**Important:** Be specific about tool names and explain your reasoning clearly. Focus on creating a practical, actionable workflow that the user can follow step-by-step.
   `;
 
   try {
