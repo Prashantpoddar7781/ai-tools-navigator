@@ -16,12 +16,13 @@ const MVPBuilderPage: React.FC = () => {
           No need to juggle between multiple AIs. Tell us what you want, and we'll deliver your complete, functional product. 
           <span className="text-cyan-400 font-semibold"> 100% Money Back Guarantee</span> if you don't like the end result - no questions asked.
         </p>
-        <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 max-w-4xl mx-auto mb-8">
-          <h3 className="text-xl font-semibold text-center mb-4">What You Can Create</h3>
-          <div className="grid md:grid-cols-3 gap-4 text-sm">
+        <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 max-w-6xl mx-auto mb-8">
+          <h3 className="text-xl font-semibold text-center mb-6">What You Can Create</h3>
+          <p className="text-center text-slate-300 mb-6 font-medium">Create anything you can think of or do any task you need - from simple websites to complex applications!</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
             <div className="text-center">
               <h4 className="font-semibold text-cyan-400 mb-2">Websites & Apps</h4>
-              <p className="text-slate-400">E-commerce sites, SaaS platforms, mobile apps, landing pages</p>
+              <p className="text-slate-400">E-commerce sites, SaaS platforms, mobile apps, landing pages, portfolios</p>
             </div>
             <div className="text-center">
               <h4 className="font-semibold text-cyan-400 mb-2">Marketing Campaigns</h4>
@@ -31,6 +32,33 @@ const MVPBuilderPage: React.FC = () => {
               <h4 className="font-semibold text-cyan-400 mb-2">Videos & Content</h4>
               <p className="text-slate-400">Promotional videos, tutorials, presentations, animated content</p>
             </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Business Tools</h4>
+              <p className="text-slate-400">CRM systems, project management tools, analytics dashboards, automation scripts</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">E-commerce Solutions</h4>
+              <p className="text-slate-400">Online stores, payment systems, inventory management, customer portals</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Educational Content</h4>
+              <p className="text-slate-400">Online courses, interactive tutorials, learning management systems</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Data & Analytics</h4>
+              <p className="text-slate-400">Data visualization tools, reporting dashboards, business intelligence platforms</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Creative Projects</h4>
+              <p className="text-slate-400">Portfolio websites, art galleries, creative showcases, design systems</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Community Platforms</h4>
+              <p className="text-slate-400">Forums, social networks, chat applications, community hubs</p>
+            </div>
+          </div>
+          <div className="text-center mt-6">
+            <p className="text-slate-300 font-semibold">And much more! If you can imagine it, we can build it.</p>
           </div>
         </div>
         <div className="bg-gradient-to-r from-blue-900 to-cyan-900 p-6 rounded-lg border border-cyan-500 max-w-2xl mx-auto">
