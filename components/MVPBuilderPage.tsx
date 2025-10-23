@@ -16,6 +16,30 @@ const MVPBuilderPage: React.FC = () => {
           No need to juggle between multiple AIs. Tell us what you want, and we'll deliver your complete, functional product. 
           <span className="text-cyan-400 font-semibold"> 100% Money Back Guarantee</span> if you don't like the end result - no questions asked.
         </p>
+        <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 max-w-4xl mx-auto mb-8">
+          <h3 className="text-xl font-semibold text-center mb-4">What You Can Create</h3>
+          <div className="grid md:grid-cols-3 gap-4 text-sm">
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Websites & Apps</h4>
+              <p className="text-slate-400">E-commerce sites, SaaS platforms, mobile apps, landing pages</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Marketing Campaigns</h4>
+              <p className="text-slate-400">Social media content, email campaigns, ad creatives, brand materials</p>
+            </div>
+            <div className="text-center">
+              <h4 className="font-semibold text-cyan-400 mb-2">Videos & Content</h4>
+              <p className="text-slate-400">Promotional videos, tutorials, presentations, animated content</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-r from-blue-900 to-cyan-900 p-6 rounded-lg border border-cyan-500 max-w-2xl mx-auto">
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-cyan-400 mb-2">Transparent Pricing</h3>
+            <p className="text-slate-300 mb-2">Service starts at <span className="text-white font-bold">₹99</span> and maximum price is <span className="text-white font-bold">₹499</span></p>
+            <p className="text-slate-400 text-sm">Even for full-stack web development, you'll never pay more than ₹499</p>
+          </div>
+        </div>
         <div className="bg-gradient-to-r from-green-900 to-emerald-900 p-6 rounded-lg border border-green-500 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Shield className="text-green-400" size={24} />
