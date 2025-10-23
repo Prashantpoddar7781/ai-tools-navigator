@@ -36,7 +36,7 @@ const MVPBuilderPage: React.FC = () => {
         <div className="bg-gradient-to-r from-blue-900 to-cyan-900 p-6 rounded-lg border border-cyan-500 max-w-2xl mx-auto">
           <div className="text-center">
             <h3 className="text-xl font-bold text-cyan-400 mb-2">Transparent Pricing</h3>
-            <p className="text-slate-300 mb-2">Service starts at <span className="text-white font-bold">₹99</span> and maximum price is <span className="text-white font-bold">₹499</span></p>
+            <p className="text-slate-300 mb-2">Service starts at <span className="text-white font-bold">₹9</span> and maximum price is <span className="text-white font-bold">₹499</span></p>
             <p className="text-slate-400 text-sm">Even for full-stack web development, you'll never pay more than ₹499</p>
           </div>
         </div>

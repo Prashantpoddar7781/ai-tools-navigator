@@ -33,7 +33,7 @@ You are an expert AI workflow consultant specializing in creating comprehensive,
 7. Include estimated time for each step (in hours, be realistic and consistent)
 8. Calculate TOTAL time range (minimum to maximum hours) by adding all step times
 9. Calculate price as (Average Hours × ₹20) - ₹1 (always show -1)
-10. IMPORTANT: Price must be between ₹99-₹499. If calculated price exceeds ₹499, cap it at ₹499
+10. IMPORTANT: Price must be between ₹9-₹499. If calculated price exceeds ₹499, cap it at ₹499
 11. Suggest tips for getting the best results
 
 **Format your response as follows:**
@@ -73,7 +73,7 @@ ${toolList}
 - Be specific about tool names and explain your reasoning clearly
 - Focus on creating a practical, actionable workflow that the user can follow step-by-step
 - For pricing: If time range is 8-12 hours, show ₹199 (average 10×20-1). If 4-6 hours, show ₹99 (average 5×20-1). Always subtract 1 from the total.
-- PRICE CAP: Maximum price is ₹499, minimum is ₹99. Never exceed ₹499 even for complex projects.
+- PRICE CAP: Maximum price is ₹499, minimum is ₹9. Never exceed ₹499 even for complex projects.
 - CONSISTENCY: For similar tasks like "create app", provide consistent time estimates (within 1-2 hours range).
 - Make the time estimates realistic - consider complexity and learning curve
   `;
