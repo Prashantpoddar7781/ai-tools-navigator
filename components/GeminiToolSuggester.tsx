@@ -21,6 +21,7 @@ const GeminiToolSuggester: React.FC = () => {
   // Handle MVP click using multiple methods for reliability
   React.useEffect(() => {
     const handleMvpClick = () => {
+      console.log('MVP click triggered!'); // Debug log
       setActiveView('mvp');
       setIsSuggesterOpen(false);
     };
@@ -28,32 +29,38 @@ const GeminiToolSuggester: React.FC = () => {
     // Method 1: Global function
     (window as any).navigateToMvp = handleMvpClick;
     
-    // Method 2: Event delegation with data attribute and text content
+    // Method 2: Direct event listener on the response container
     const handleClick = (e: Event) => {
       const target = e.target as HTMLElement;
+      console.log('Click detected on:', target); // Debug log
+      
       if (target && (
         target.getAttribute('data-mvp-link') === 'true' || 
         target.textContent?.includes('Create Your MVP') ||
-        target.closest('[data-mvp-link="true"]')
+        target.closest('[data-mvp-link="true"]') ||
+        target.textContent?.includes('Create Your MVP →')
       )) {
+        console.log('MVP link clicked!'); // Debug log
         e.preventDefault();
         e.stopPropagation();
         handleMvpClick();
+        return true;
       }
     };
     
-    // Add event listener to the modal container
-    const modal = document.querySelector('[data-modal="suggester"]');
-    if (modal) {
-      modal.addEventListener('click', handleClick);
+    // Add event listener to the response container specifically
+    const responseContainer = document.querySelector('.prose');
+    if (responseContainer) {
+      responseContainer.addEventListener('click', handleClick);
     }
     
+    // Also add to document for fallback
     document.addEventListener('click', handleClick);
     
     return () => {
       delete (window as any).navigateToMvp;
-      if (modal) {
-        modal.removeEventListener('click', handleClick);
+      if (responseContainer) {
+        responseContainer.removeEventListener('click', handleClick);
       }
       document.removeEventListener('click', handleClick);
     };
@@ -134,6 +141,16 @@ const GeminiToolSuggester: React.FC = () => {
             {isLoading ? <Spinner /> : <Send size={18} />}
             {isLoading ? 'Thinking...' : 'Get Suggestion'}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveView('mvp');
+              setIsSuggesterOpen(false);
+            }}
+            className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+          >
+            Test MVP Navigation
+          </button>
         </form>
         
         <div className="px-6 pb-6 overflow-y-auto">
@@ -156,7 +173,7 @@ const GeminiToolSuggester: React.FC = () => {
                             .replace(/### (.*)/g, '<h3 class="text-xl font-bold text-white mt-6 mb-3 border-b border-slate-600 pb-2">$1</h3>')
                             .replace(/## (.*)/g, '<h2 class="text-2xl font-bold text-cyan-400 mt-8 mb-4">$1</h2>')
                             .replace(/\*\*Total Estimated Time:\*\* (.*)/g, '<div class="bg-gradient-to-r from-blue-900 to-cyan-900 p-4 rounded-lg my-4 border border-cyan-500"><div class="flex items-center gap-2"><span class="text-2xl">⏱️</span><strong class="text-cyan-400 text-lg">Total Estimated Time:</strong> <span class="text-white font-bold text-lg">$1</span></div></div>')
-                            .replace(/\*\*Our Service Price:\*\* (.*)/g, '<div class="bg-gradient-to-r from-green-900 to-emerald-900 p-4 rounded-lg my-4 border border-green-500"><div class="flex items-center gap-2"><span class="text-2xl">💰</span><strong class="text-green-400 text-lg">Our Service Price:</strong> <span class="text-white font-bold text-lg">$1</span></div><p class="text-green-300 text-sm mt-2 italic">Want to save time and effort? We\'ll do this for you! <span class="text-cyan-400 hover:text-cyan-300 underline font-semibold cursor-pointer" data-mvp-link="true" onclick="window.navigateToMvp && window.navigateToMvp()">Create Your MVP →</span></p></div>')
+                            .replace(/\*\*Our Service Price:\*\* (.*)/g, '<div class="bg-gradient-to-r from-green-900 to-emerald-900 p-4 rounded-lg my-4 border border-green-500"><div class="flex items-center gap-2"><span class="text-2xl">💰</span><strong class="text-green-400 text-lg">Our Service Price:</strong> <span class="text-white font-bold text-lg">$1</span></div><p class="text-green-300 text-sm mt-2 italic">Want to save time and effort? We\'ll do this for you! <button type="button" class="text-cyan-400 hover:text-cyan-300 underline font-semibold cursor-pointer bg-transparent border-none p-0 text-left" data-mvp-link="true" onclick="window.navigateToMvp && window.navigateToMvp()">Create Your MVP →</button></p></div>')
                             .replace(/\*\*Tool:\*\* (.*)/g, '<div class="bg-slate-800 p-3 rounded-lg my-2"><strong class="text-cyan-400">Tool:</strong> <span class="text-white font-semibold">$1</span></div>')
                             .replace(/\*\*Why:\*\* (.*)/g, '<div class="text-slate-300 mb-2"><strong class="text-green-400">Why:</strong> $1</div>')
                             .replace(/\*\*Time:\*\* (.*)/g, '<div class="text-slate-300 mb-2"><strong class="text-yellow-400">Time:</strong> $1</div>')
