@@ -110,7 +110,11 @@ const GeminiToolSuggester: React.FC = () => {
             <Sparkles className="text-cyan-400" />
             AI Tool Suggester
           </h2>
-          <button onClick={handleClose} className="text-slate-400 hover:text-white transition-colors">
+          <button 
+            onClick={handleClose} 
+            className="text-slate-400 hover:text-white transition-colors bg-slate-700 hover:bg-slate-600 rounded-full p-2 border border-slate-600"
+            title="Close Modal"
+          >
             <X size={24} />
           </button>
         </header>
@@ -138,6 +142,19 @@ const GeminiToolSuggester: React.FC = () => {
             {isLoading ? <Spinner /> : <Send size={18} />}
             {isLoading ? 'Thinking...' : 'Get Suggestion'}
           </button>
+          
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView('mvp');
+                setIsSuggesterOpen(false);
+              }}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200"
+            >
+              🚀 Go to MVP Page (Skip AI Suggestions)
+            </button>
+          </div>
         </form>
         
         <div className="px-6 pb-6 overflow-y-auto">
