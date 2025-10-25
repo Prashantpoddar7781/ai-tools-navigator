@@ -21,22 +21,11 @@ router.post('/request', async (req, res) => {
       communicationMethod
     } = req.body;
 
-    // Debug: Log received data
-    console.log('Received MVP request data:', req.body);
-    
     // Validate required fields
     if (!name || !email || !projectDescription || !budget || !communicationMethod) {
-      console.log('Validation failed. Missing fields:', {
-        name: !!name,
-        email: !!email,
-        projectDescription: !!projectDescription,
-        budget: !!budget,
-        communicationMethod: !!communicationMethod
-      });
       return res.status(400).json({
         message: 'Missing required fields',
-        required: ['name', 'email', 'projectDescription', 'budget', 'communicationMethod'],
-        received: req.body
+        required: ['name', 'email', 'projectDescription', 'budget', 'communicationMethod']
       });
     }
 
