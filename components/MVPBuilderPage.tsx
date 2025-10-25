@@ -171,10 +171,7 @@ const MVPBuilderPage: React.FC = () => {
                 ? 'border-cyan-500 bg-cyan-900/20' 
                 : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
             }`}
-            onClick={() => {
-              console.log('Option 2 clicked, setting selectedOption to description');
-              setSelectedOption('description');
-            }}
+            onClick={() => setSelectedOption('description')}
           >
             <div className="flex items-center gap-3 mb-4">
               <MessageSquare className="h-8 w-8 text-cyan-400" />
@@ -256,10 +253,6 @@ const MVPBuilderPage: React.FC = () => {
           </div>
         ) : (
           <div>
-            <div className="mb-4 p-4 bg-blue-900/50 border border-blue-500 rounded-lg">
-              <p className="text-blue-400 font-semibold">🔍 Debug: Form should be visible now</p>
-              <p className="text-blue-300 text-sm">selectedOption = {selectedOption}</p>
-            </div>
             <form onSubmit={handleSubmit} className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 max-w-2xl mx-auto mb-6">
               <h3 className="text-xl font-semibold mb-4">Describe Your Requirements</h3>
               
