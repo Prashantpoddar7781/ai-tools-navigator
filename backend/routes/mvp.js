@@ -48,21 +48,30 @@ router.post('/request', async (req, res) => {
 
     // Send email notifications
     try {
+      console.log('📧 Starting email notifications...');
+      console.log('📧 Admin email:', process.env.ADMIN_EMAIL);
+      console.log('📧 Customer email:', mvpRequest.email);
+      
       // Send admin notification
+      console.log('📧 Sending admin notification...');
       await sendEmailNotification({
         type: 'new_mvp_request',
         mvpRequest,
         recipient: process.env.ADMIN_EMAIL || 'admin@ideabazzar.com'
       });
+      console.log('✅ Admin notification sent!');
 
       // Send customer confirmation
+      console.log('📧 Sending customer confirmation...');
       await sendEmailNotification({
         type: 'customer_confirmation',
         mvpRequest,
         recipient: mvpRequest.email
       });
+      console.log('✅ Customer confirmation sent!');
+      
     } catch (emailError) {
-      console.error('Email notification failed:', emailError);
+      console.error('❌ Email notification failed:', emailError);
       // Don't fail the request if email fails
     }
 
