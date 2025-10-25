@@ -48,8 +48,17 @@ class ApiService {
       ...options,
     };
 
+    // Add timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     try {
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -58,6 +67,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('API request failed:', error);
       throw error;
     }
