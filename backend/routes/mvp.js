@@ -46,8 +46,11 @@ router.post('/request', async (req, res) => {
 
     await mvpRequest.save();
 
-    // Send email notifications
+    // Send email notifications (temporarily disabled for testing)
     try {
+      console.log('Email notifications temporarily disabled for testing');
+      // TODO: Re-enable email notifications after testing
+      /*
       // Send admin notification
       await sendEmailNotification({
         type: 'new_mvp_request',
@@ -61,6 +64,7 @@ router.post('/request', async (req, res) => {
         mvpRequest,
         recipient: mvpRequest.email
       });
+      */
     } catch (emailError) {
       console.error('Email notification failed:', emailError);
       // Don't fail the request if email fails
