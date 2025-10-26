@@ -46,34 +46,44 @@ router.post('/request', async (req, res) => {
       communicationMethod
     });
 
+    console.log('💾 Saving MVP request to database...');
     await mvpRequest.save();
+    console.log('✅ MVP request saved successfully with ID:', mvpRequest._id);
 
     // Send email notifications
     try {
+      console.log('📧 Starting email notifications...');
+      
       // Send admin notification
+      console.log('📧 Sending admin notification to:', process.env.ADMIN_EMAIL);
       await sendEmailNotification({
         type: 'new_mvp_request',
         mvpRequest,
         recipient: process.env.ADMIN_EMAIL || 'admin@ideabazzar.com'
       });
+      console.log('✅ Admin notification sent successfully');
 
       // Send customer confirmation
+      console.log('📧 Sending customer confirmation to:', mvpRequest.email);
       await sendEmailNotification({
         type: 'customer_confirmation',
         mvpRequest,
         recipient: mvpRequest.email
       });
+      console.log('✅ Customer confirmation sent successfully');
       
     } catch (emailError) {
-      console.error('Email notification failed:', emailError);
+      console.error('❌ Email notification failed:', emailError);
       // Don't fail the request if email fails
     }
 
+    console.log('📤 Sending success response to frontend...');
     res.status(201).json({
       message: 'MVP request submitted successfully',
       requestId: mvpRequest._id,
       status: mvpRequest.status
     });
+    console.log('✅ Response sent successfully');
 
   } catch (error) {
     console.error('Error creating MVP request:', error);
