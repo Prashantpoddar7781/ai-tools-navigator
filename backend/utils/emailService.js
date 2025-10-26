@@ -1,30 +1,13 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('@resend/node');
 
-// Create email transporter
-const createTransporter = () => {
-  // Use Gmail SMTP with increased timeouts for Railway
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    // Increased timeouts for Railway
-    connectionTimeout: 30000, // 30 seconds
-    greetingTimeout: 30000,   // 30 seconds
-    socketTimeout: 30000,     // 30 seconds
-    pool: true,              // Use connection pooling
-    maxConnections: 2,        // Maximum connections in pool
-    maxMessages: 10,          // Maximum messages per connection
-    rateLimit: 5              // Maximum messages per second
-  });
-};
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email templates
 const emailTemplates = {
   new_mvp_request: (data) => ({
+    from: 'IdeaBazzar <noreply@ideabazzar.com>',
+    to: data.recipient,
     subject: `New MVP Request from ${data.mvpRequest.name}`,
     html: `
       <h2>New MVP Request Received</h2>
@@ -56,70 +39,14 @@ const emailTemplates = {
       </ul>
       ` : ''}
       
-      <p><strong>Request ID:</strong> ${data.mvpRequest._id}</p>
-      <p><strong>Submitted:</strong> ${new Date(data.mvpRequest.createdAt).toLocaleString()}</p>
-    `
-  }),
-
-  meeting_scheduled: (data) => ({
-    subject: `Meeting Scheduled - ${data.meeting.title}`,
-    html: `
-      <h2>Meeting Scheduled Successfully</h2>
-      <p>Hello ${data.meeting.client.name},</p>
-      
-      <p>Your meeting has been scheduled for:</p>
-      <ul>
-        <li><strong>Date & Time:</strong> ${new Date(data.meeting.startTime).toLocaleString()}</li>
-        <li><strong>Duration:</strong> ${data.meeting.duration} minutes</li>
-        <li><strong>Meeting Link:</strong> <a href="${data.meeting.googleMeetLink}">Join Meeting</a></li>
-      </ul>
-      
-      ${data.meeting.agenda && data.meeting.agenda.length > 0 ? `
-      <h3>Agenda:</h3>
-      <ul>
-        ${data.meeting.agenda.map(item => `<li>${item}</li>`).join('')}
-      </ul>
-      ` : ''}
-      
-      <p>We look forward to discussing your project with you!</p>
-      
-      <p>Best regards,<br>IdeaBazzar Team</p>
-    `
-  }),
-
-  meeting_scheduled_admin: (data) => ({
-    subject: `Meeting Scheduled - ${data.meeting.title}`,
-    html: `
-      <h2>Meeting Scheduled</h2>
-      <p><strong>Client:</strong> ${data.meeting.client.name} (${data.meeting.client.email})</p>
-      <p><strong>Date & Time:</strong> ${new Date(data.meeting.startTime).toLocaleString()}</p>
-      <p><strong>Duration:</strong> ${data.meeting.duration} minutes</p>
-      <p><strong>Meeting Link:</strong> <a href="${data.meeting.googleMeetLink}">Join Meeting</a></p>
-      
-      ${data.meeting.agenda && data.meeting.agenda.length > 0 ? `
-      <h3>Agenda:</h3>
-      <ul>
-        ${data.meeting.agenda.map(item => `<li>${item}</li>`).join('')}
-      </ul>
-      ` : ''}
-    `
-  }),
-
-  meeting_cancelled: (data) => ({
-    subject: `Meeting Cancelled - ${data.meeting.title}`,
-    html: `
-      <h2>Meeting Cancelled</h2>
-      <p>Hello ${data.meeting.client.name},</p>
-      
-      <p>Your meeting scheduled for ${new Date(data.meeting.startTime).toLocaleString()} has been cancelled.</p>
-      
-      <p>We apologize for any inconvenience. Please contact us to reschedule.</p>
-      
-      <p>Best regards,<br>IdeaBazzar Team</p>
+      <hr>
+      <p>This is an automated notification from IdeaBazzar MVP Service.</p>
     `
   }),
 
   customer_confirmation: (data) => ({
+    from: 'IdeaBazzar <noreply@ideabazzar.com>',
+    to: data.recipient,
     subject: `MVP Request Received - IdeaBazzar`,
     html: `
       <h2>Thank You for Your MVP Request!</h2>
@@ -158,58 +85,33 @@ const emailTemplates = {
 };
 
 // Send email notification
-const sendEmailNotification = async ({ type, ...data }) => {
+async function sendEmailNotification({ type, mvpRequest, recipient }) {
   try {
-    const transporter = createTransporter();
     const template = emailTemplates[type];
-    
     if (!template) {
       throw new Error(`Email template not found for type: ${type}`);
     }
 
-    const emailContent = template(data);
-    
-    const mailOptions = {
-      from: `"IdeaBazzar" <${process.env.EMAIL_USER}>`,
-      to: data.recipient,
-      subject: emailContent.subject,
-      html: emailContent.html
-    };
+    // Get email data from template
+    const emailData = template({ mvpRequest, recipient });
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', result.messageId);
-    return result;
+    // Send email using Resend
+    const data = await resend.emails.send({
+      from: emailData.from,
+      to: recipient,
+      subject: emailData.subject,
+      html: emailData.html
+    });
 
+    console.log('✅ Email sent successfully:', data);
+
+    return data;
   } catch (error) {
-    console.error('Email sending failed:', error);
+    console.error('❌ Email sending failed:', error);
     throw error;
   }
-};
-
-// Send custom email
-const sendCustomEmail = async ({ to, subject, html, text }) => {
-  try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: `"IdeaBazzar" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html,
-      text
-    };
-
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Custom email sent successfully:', result.messageId);
-    return result;
-
-  } catch (error) {
-    console.error('Custom email sending failed:', error);
-    throw error;
-  }
-};
+}
 
 module.exports = {
-  sendEmailNotification,
-  sendCustomEmail
+  sendEmailNotification
 };
