@@ -56,21 +56,24 @@ router.post('/request', async (req, res) => {
       
       // Send admin notification
       console.log('📧 Sending admin notification to:', process.env.ADMIN_EMAIL);
-      await sendEmailNotification({
+      const adminResult = await sendEmailNotification({
         type: 'new_mvp_request',
         mvpRequest,
         recipient: process.env.ADMIN_EMAIL || 'admin@ideabazzar.com'
       });
-      console.log('✅ Admin notification sent successfully');
+      console.log('✅ Admin notification sent successfully:', adminResult);
+
+      // Add a small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Send customer confirmation
       console.log('📧 Sending customer confirmation to:', mvpRequest.email);
-      await sendEmailNotification({
+      const customerResult = await sendEmailNotification({
         type: 'customer_confirmation',
         mvpRequest,
         recipient: mvpRequest.email
       });
-      console.log('✅ Customer confirmation sent successfully');
+      console.log('✅ Customer confirmation sent successfully:', customerResult);
       
     } catch (emailError) {
       console.error('❌ Email notification failed:', emailError);
