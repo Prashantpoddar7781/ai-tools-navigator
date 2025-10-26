@@ -1,4 +1,4 @@
-const { Resend } = require('@resend/node');
+const { Resend } = require('resend');
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
