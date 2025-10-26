@@ -87,6 +87,8 @@ const emailTemplates = {
 // Send email notification
 async function sendEmailNotification({ type, mvpRequest, recipient }) {
   try {
+    console.log(`📧 Preparing to send ${type} email to: ${recipient}`);
+    
     const template = emailTemplates[type];
     if (!template) {
       throw new Error(`Email template not found for type: ${type}`);
@@ -94,6 +96,8 @@ async function sendEmailNotification({ type, mvpRequest, recipient }) {
 
     // Get email data from template
     const emailData = template({ mvpRequest, recipient });
+    
+    console.log(`📧 Email details: From: ${emailData.from}, To: ${recipient}, Subject: ${emailData.subject}`);
 
     // Send email using Resend
     const data = await resend.emails.send({
@@ -103,7 +107,13 @@ async function sendEmailNotification({ type, mvpRequest, recipient }) {
       html: emailData.html
     });
 
-    console.log('✅ Email sent successfully:', data);
+    console.log('✅ Email sent successfully:', JSON.stringify(data, null, 2));
+
+    // Check if there was an error in the response
+    if (data.error) {
+      console.error('❌ Resend returned an error:', data.error);
+      throw new Error(data.error.message || 'Failed to send email');
+    }
 
     return data;
   } catch (error) {
