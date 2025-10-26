@@ -50,11 +50,8 @@ router.post('/request', async (req, res) => {
     await mvpRequest.save();
     console.log('✅ MVP request saved successfully with ID:', mvpRequest._id);
 
-    // Send email notifications (temporarily disabled due to Render.com SMTP timeout)
+    // Send email notifications (using SendGrid for better Render.com compatibility)
     try {
-      console.log('📧 Email notifications temporarily disabled due to SMTP timeout on Render.com');
-      // TODO: Fix email configuration for production
-      /*
       console.log('📧 Starting email notifications...');
       
       // Send admin notification
@@ -74,7 +71,6 @@ router.post('/request', async (req, res) => {
         recipient: mvpRequest.email
       });
       console.log('✅ Customer confirmation sent successfully');
-      */
       
     } catch (emailError) {
       console.error('❌ Email notification failed:', emailError);
