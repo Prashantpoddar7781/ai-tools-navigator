@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Email templates
 const emailTemplates = {
   new_mvp_request: (data) => ({
-    from: 'IdeaBazzar <noreply@ideabazzar.com>',
+    from: 'IdeaBazzar <prashantpoddar29@gmail.com>',
     to: data.recipient,
     subject: `New MVP Request from ${data.mvpRequest.name}`,
     html: `
@@ -45,7 +45,7 @@ const emailTemplates = {
   }),
 
   customer_confirmation: (data) => ({
-    from: 'IdeaBazzar <noreply@ideabazzar.com>',
+    from: 'IdeaBazzar <prashantpoddar29@gmail.com>',
     to: data.recipient,
     subject: `MVP Request Received - IdeaBazzar`,
     html: `
