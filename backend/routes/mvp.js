@@ -7,6 +7,8 @@ const { sendEmailNotification } = require('../utils/emailService');
 // Create new MVP request
 router.post('/request', async (req, res) => {
   try {
+    console.log('📥 MVP request received from:', req.headers.origin);
+    console.log('📥 Request body:', req.body);
     const {
       name,
       email,
