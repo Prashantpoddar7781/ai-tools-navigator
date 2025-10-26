@@ -1,12 +1,20 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create email transporter using Gmail SMTP
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+};
 
 // Email templates
 const emailTemplates = {
   new_mvp_request: (data) => ({
-    from: 'IdeaBazzar <onboarding@resend.dev>',
+    from: `IdeaBazzar <${process.env.EMAIL_USER}>`,
     to: data.recipient,
     subject: `New MVP Request from ${data.mvpRequest.name}`,
     html: `
@@ -45,7 +53,7 @@ const emailTemplates = {
   }),
 
   customer_confirmation: (data) => ({
-    from: 'IdeaBazzar <onboarding@resend.dev>',
+    from: `IdeaBazzar <${process.env.EMAIL_USER}>`,
     to: data.recipient,
     subject: `MVP Request Received - IdeaBazzar`,
     html: `
@@ -99,23 +107,19 @@ async function sendEmailNotification({ type, mvpRequest, recipient }) {
     
     console.log(`📧 Email details: From: ${emailData.from}, To: ${recipient}, Subject: ${emailData.subject}`);
 
-    // Send email using Resend
-    const data = await resend.emails.send({
+    // Create transporter
+    const transporter = createTransporter();
+    
+    // Send email using Nodemailer
+    const info = await transporter.sendMail({
       from: emailData.from,
-      to: recipient,
+      to: emailData.to,
       subject: emailData.subject,
       html: emailData.html
     });
 
-    console.log('✅ Email sent successfully:', JSON.stringify(data, null, 2));
-
-    // Check if there was an error in the response
-    if (data.error) {
-      console.error('❌ Resend returned an error:', data.error);
-      throw new Error(data.error.message || 'Failed to send email');
-    }
-
-    return data;
+    console.log('✅ Email sent successfully:', info.messageId);
+    return info;
   } catch (error) {
     console.error('❌ Email sending failed:', error);
     throw error;
