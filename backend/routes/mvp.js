@@ -50,7 +50,7 @@ router.post('/request', async (req, res) => {
     await mvpRequest.save();
     console.log('✅ MVP request saved successfully with ID:', mvpRequest._id);
 
-    // Send email notifications (using SendGrid for better Render.com compatibility)
+    // Send email notifications (enabled for Railway deployment)
     try {
       console.log('📧 Starting email notifications...');
       

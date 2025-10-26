@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://ideabazzar-backend.onrender.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://ai-tools-navigator-production.up.railway.app/api';
 
 export interface MvpRequestData {
   name: string;
