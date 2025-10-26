@@ -1,20 +1,12 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
-// Create email transporter using Gmail SMTP
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Email templates
 const emailTemplates = {
   new_mvp_request: (data) => ({
-    from: `IdeaBazzar <${process.env.EMAIL_USER}>`,
+    from: 'prashantpoddar29@gmail.com',
     to: data.recipient,
     subject: `New MVP Request from ${data.mvpRequest.name}`,
     html: `
@@ -53,7 +45,7 @@ const emailTemplates = {
   }),
 
   customer_confirmation: (data) => ({
-    from: `IdeaBazzar <${process.env.EMAIL_USER}>`,
+    from: 'prashantpoddar29@gmail.com',
     to: data.recipient,
     subject: `MVP Request Received - IdeaBazzar`,
     html: `
@@ -107,19 +99,20 @@ async function sendEmailNotification({ type, mvpRequest, recipient }) {
     
     console.log(`📧 Email details: From: ${emailData.from}, To: ${recipient}, Subject: ${emailData.subject}`);
 
-    // Create transporter
-    const transporter = createTransporter();
-    
-    // Send email using Nodemailer
-    const info = await transporter.sendMail({
-      from: emailData.from,
+    // Send email using SendGrid
+    const msg = {
       to: emailData.to,
+      from: emailData.from,
       subject: emailData.subject,
-      html: emailData.html
-    });
+      html: emailData.html,
+    };
 
-    console.log('✅ Email sent successfully:', info.messageId);
-    return info;
+    const response = await sgMail.send(msg);
+    
+    console.log('✅ Email sent successfully:', response[0].statusCode);
+    console.log('📧 Response headers:', response[0].headers);
+    
+    return response;
   } catch (error) {
     console.error('❌ Email sending failed:', error);
     throw error;
