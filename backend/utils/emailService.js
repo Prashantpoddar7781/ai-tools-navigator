@@ -1,7 +1,20 @@
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-// Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Create email transporter using Gmail SMTP with Railway-compatible settings
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    },
+    // Railway-compatible settings
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 1,
+    rateLimit: 1
+  });
+};
 
 // Email templates
 const emailTemplates = {
@@ -99,20 +112,19 @@ async function sendEmailNotification({ type, mvpRequest, recipient }) {
     
     console.log(`📧 Email details: From: ${emailData.from}, To: ${recipient}, Subject: ${emailData.subject}`);
 
-    // Send email using SendGrid
-    const msg = {
-      to: emailData.to,
+    // Create transporter
+    const transporter = createTransporter();
+    
+    // Send email using Nodemailer
+    const info = await transporter.sendMail({
       from: emailData.from,
+      to: emailData.to,
       subject: emailData.subject,
-      html: emailData.html,
-    };
+      html: emailData.html
+    });
 
-    const response = await sgMail.send(msg);
-    
-    console.log('✅ Email sent successfully:', response[0].statusCode);
-    console.log('📧 Response headers:', response[0].headers);
-    
-    return response;
+    console.log('✅ Email sent successfully:', info.messageId);
+    return info;
   } catch (error) {
     console.error('❌ Email sending failed:', error);
     throw error;
