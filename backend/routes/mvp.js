@@ -50,35 +50,9 @@ router.post('/request', async (req, res) => {
     await mvpRequest.save();
     console.log('✅ MVP request saved successfully with ID:', mvpRequest._id);
 
-    // Send email notifications (enabled for Railway deployment)
-    try {
-      console.log('📧 Starting email notifications...');
-      
-      // Send admin notification
-      console.log('📧 Sending admin notification to:', process.env.ADMIN_EMAIL);
-      const adminResult = await sendEmailNotification({
-        type: 'new_mvp_request',
-        mvpRequest,
-        recipient: process.env.ADMIN_EMAIL || 'admin@ideabazzar.com'
-      });
-      console.log('✅ Admin notification sent successfully:', adminResult);
-
-      // Add a small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Send customer confirmation
-      console.log('📧 Sending customer confirmation to:', mvpRequest.email);
-      const customerResult = await sendEmailNotification({
-        type: 'customer_confirmation',
-        mvpRequest,
-        recipient: mvpRequest.email
-      });
-      console.log('✅ Customer confirmation sent successfully:', customerResult);
-      
-    } catch (emailError) {
-      console.error('❌ Email notification failed:', emailError);
-      // Don't fail the request if email fails
-    }
+    // Email notifications temporarily disabled - focusing on core features
+    console.log('📧 Email notifications disabled - MVP request saved successfully');
+    console.log('📧 Admin can view requests in database or dashboard');
 
     console.log('📤 Sending success response to frontend...');
     res.status(201).json({
