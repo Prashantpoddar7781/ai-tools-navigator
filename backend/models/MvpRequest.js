@@ -75,6 +75,23 @@ const mvpRequestSchema = new mongoose.Schema({
     trim: true
   },
   
+  // Payment Information
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed', 'refunded'],
+    default: 'pending'
+  },
+  paymentId: {
+    type: String,
+    trim: true
+  },
+  paymentDate: {
+    type: Date
+  },
+  amountPaid: {
+    type: Number
+  },
+  
   // Status Tracking
   status: {
     type: String,

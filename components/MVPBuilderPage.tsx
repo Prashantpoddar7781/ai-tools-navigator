@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Zap, Rocket, Check, MessageSquare, Clock, Shield, Star } from 'lucide-react';
+import { Calendar, Zap, Rocket, Check, MessageSquare, Clock, Shield, Star, CreditCard } from 'lucide-react';
 import { CALENDLY_LINK } from '../constants';
 import { apiService, type MvpRequestData } from '../services/apiService';
 import { analytics } from '../services/analytics';
+import { paymentService } from '../services/paymentService';
 
 const MVPBuilderPage: React.FC = () => {
   const isCalendlyLinkSet = CALENDLY_LINK !== "https://calendly.com/your-link";
   const [selectedOption, setSelectedOption] = useState<'meeting' | 'description'>('meeting');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [savedRequestId, setSavedRequestId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -69,6 +73,7 @@ const MVPBuilderPage: React.FC = () => {
 
       const response = await apiService.submitMvpRequest(mvpRequestData);
       setSubmitStatus('success');
+      setSavedRequestId(response.requestId);
       
       // Track analytics
       analytics.trackMvpSubmission('description', {
@@ -76,24 +81,75 @@ const MVPBuilderPage: React.FC = () => {
         timeline: formData.timeline,
       });
       
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        projectDescription: '',
-        targetAudience: '',
-        uniqueSellingPoints: '',
-        features: '',
-        budget: '₹9-₹99',
-        timeline: 'flexible'
-      });
+      // Don't reset form yet - wait for payment
 
     } catch (error) {
       console.error('Failed to submit MVP request:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!savedRequestId) {
+      setPaymentStatus('error');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    setPaymentStatus('idle');
+
+    try {
+      // Calculate price from budget
+      const amount = paymentService.calculatePrice(formData.budget);
+      
+      // Create Razorpay order
+      const orderData = await paymentService.createOrder(amount, savedRequestId);
+      
+      // Initialize payment
+      await paymentService.initializePayment(orderData, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        description: `MVP Service - ${formData.projectDescription.substring(0, 50)}...`,
+        onSuccess: async (paymentData) => {
+          setPaymentStatus('success');
+          setIsProcessingPayment(false);
+          
+          // Reset form after successful payment
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            projectDescription: '',
+            targetAudience: '',
+            uniqueSellingPoints: '',
+            features: '',
+            budget: '₹9-₹99',
+            timeline: 'flexible'
+          });
+          setSavedRequestId(null);
+          
+          // Track payment success
+          analytics.trackEvent('payment_success', {
+            amount: amount,
+            payment_id: paymentData.razorpay_payment_id,
+          });
+        },
+        onFailure: (error) => {
+          console.error('Payment failed:', error);
+          setPaymentStatus('error');
+          setIsProcessingPayment(false);
+          
+          // Track payment failure
+          analytics.trackError('Payment failed', 'MVPBuilderPage');
+        },
+      });
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      setPaymentStatus('error');
+      setIsProcessingPayment(false);
     }
   };
 
@@ -307,7 +363,42 @@ const MVPBuilderPage: React.FC = () => {
               {submitStatus === 'success' && (
                 <div className="mb-4 p-4 bg-green-900/50 border border-green-500 rounded-lg">
                   <p className="text-green-400 font-semibold">✅ Request submitted successfully!</p>
-                  <p className="text-green-300 text-sm">We'll review your requirements and get back to you within 24 hours.</p>
+                  <p className="text-green-300 text-sm mb-4">Complete your payment to start the project.</p>
+                  
+                  {/* Payment Button */}
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={handlePayment}
+                      disabled={isProcessingPayment || paymentStatus === 'success'}
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <CreditCard size={20} />
+                      {isProcessingPayment 
+                        ? 'Processing Payment...' 
+                        : paymentStatus === 'success'
+                        ? '✅ Payment Successful!'
+                        : `Pay ₹${paymentService.calculatePrice(formData.budget)}`}
+                    </button>
+                    <p className="text-green-300 text-xs mt-2 text-center">
+                      Secure payment via Razorpay • UPI, Cards, Wallets accepted
+                    </p>
+                  </div>
+
+                  {/* Payment Status Messages */}
+                  {paymentStatus === 'success' && (
+                    <div className="mt-4 p-3 bg-emerald-900/50 border border-emerald-500 rounded-lg">
+                      <p className="text-emerald-400 font-semibold">🎉 Payment Successful!</p>
+                      <p className="text-emerald-300 text-sm">Your project has been confirmed. We'll get started right away!</p>
+                    </div>
+                  )}
+
+                  {paymentStatus === 'error' && (
+                    <div className="mt-4 p-3 bg-red-900/50 border border-red-500 rounded-lg">
+                      <p className="text-red-400 font-semibold">❌ Payment Failed</p>
+                      <p className="text-red-300 text-sm">Please try again. If the issue persists, contact us.</p>
+                    </div>
+                  )}
                 </div>
               )}
               

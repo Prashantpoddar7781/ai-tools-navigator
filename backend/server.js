@@ -40,6 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/mvp', require('./routes/mvp'));
 app.use('/api/meetings', require('./routes/meetings'));
+app.use('/api/payments', require('./routes/payments'));
 
 // Health check
 app.get('/api/health', (req, res) => {

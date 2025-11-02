@@ -209,6 +209,39 @@ class ApiService {
       message: string;
     }>('/health');
   }
+
+  // Payment methods
+  async createRazorpayOrder(data: {
+    amount: number;
+    currency: string;
+    mvpRequestId?: string;
+  }) {
+    return this.request<{
+      id: string;
+      amount: number;
+      currency: string;
+      key: string;
+    }>('/payments/create-order', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async verifyRazorpayPayment(data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    mvpRequestId?: string;
+  }) {
+    return this.request<{
+      message: string;
+      paymentId: string;
+      status: string;
+    }>('/payments/verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();
