@@ -12,6 +12,7 @@ import ToolDetailsModal from './components/ToolDetailsModal';
 import GeminiToolSuggester from './components/GeminiToolSuggester';
 import MVPBuilderPage from './components/MVPBuilderPage';
 import { Search, SortAsc, SortDesc } from 'lucide-react';
+import { analytics } from './services/analytics';
 
 const ToolFinderView: React.FC = () => {
     const { activeSubCategory, searchQuery, setSearchQuery, sortOrder, toggleSortOrder } = useStore();
@@ -59,7 +60,12 @@ const ToolFinderView: React.FC = () => {
                             type="text"
                             placeholder="Search tools..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                              setSearchQuery(e.target.value);
+                              if (e.target.value.trim()) {
+                                analytics.trackSearch(e.target.value);
+                              }
+                            }}
                             className="w-full bg-slate-800 border border-slate-600 rounded-md pl-10 pr-4 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                         />
                     </div>
@@ -97,6 +103,12 @@ const ToolFinderView: React.FC = () => {
 
 const AppContent: React.FC = () => {
     const { activeView } = useStore();
+
+    // Track page views when view changes
+    React.useEffect(() => {
+        const viewName = activeView === 'finder' ? 'AI Tool Finder' : 'MVP Builder';
+        analytics.trackPageView(`/${activeView}`, viewName);
+    }, [activeView]);
 
     return (
         <div className="h-screen w-screen bg-slate-900 text-slate-200 flex flex-col">

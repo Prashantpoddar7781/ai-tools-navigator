@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Zap, Rocket, Check, MessageSquare, Clock, Shield, Star } from 'lucide-react';
 import { CALENDLY_LINK } from '../constants';
 import { apiService, type MvpRequestData } from '../services/apiService';
+import { analytics } from '../services/analytics';
 
 const MVPBuilderPage: React.FC = () => {
   const isCalendlyLinkSet = CALENDLY_LINK !== "https://calendly.com/your-link";
@@ -68,6 +69,12 @@ const MVPBuilderPage: React.FC = () => {
 
       const response = await apiService.submitMvpRequest(mvpRequestData);
       setSubmitStatus('success');
+      
+      // Track analytics
+      analytics.trackMvpSubmission('description', {
+        budget: formData.budget,
+        timeline: formData.timeline,
+      });
       
       // Reset form
       setFormData({
@@ -170,7 +177,10 @@ const MVPBuilderPage: React.FC = () => {
                 ? 'border-cyan-500 bg-cyan-900/20' 
                 : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
             }`}
-            onClick={() => setSelectedOption('meeting')}
+            onClick={() => {
+              setSelectedOption('meeting');
+              analytics.trackButtonClick('Schedule Meeting Option', 'MVP Page');
+            }}
           >
             <div className="flex items-center gap-3 mb-4">
               <Calendar className="h-8 w-8 text-cyan-400" />
@@ -189,7 +199,10 @@ const MVPBuilderPage: React.FC = () => {
                 ? 'border-cyan-500 bg-cyan-900/20' 
                 : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
             }`}
-            onClick={() => setSelectedOption('description')}
+            onClick={() => {
+              setSelectedOption('description');
+              analytics.trackButtonClick('Describe Requirements Option', 'MVP Page');
+            }}
           >
             <div className="flex items-center gap-3 mb-4">
               <MessageSquare className="h-8 w-8 text-cyan-400" />
@@ -276,6 +289,7 @@ const MVPBuilderPage: React.FC = () => {
                   href={CALENDLY_LINK}
           target="_blank"
           rel="noopener noreferrer"
+                  onClick={() => analytics.trackMeetingBooking()}
                   className="inline-block text-xl font-bold py-4 px-10 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/50"
                 >
                   Open Calendar Booking

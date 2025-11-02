@@ -5,6 +5,7 @@ import { Sparkles, X, Send } from 'lucide-react';
 import { suggestTool } from '../services/geminiService';
 import { CATEGORIES } from '../constants';
 import Spinner from './Spinner';
+import { analytics } from '../services/analytics';
 
 const GeminiToolSuggester: React.FC = () => {
   const { isSuggesterOpen, setIsSuggesterOpen, setActiveView } = useStore();
@@ -74,9 +75,13 @@ const GeminiToolSuggester: React.FC = () => {
     try {
       const result = await suggestTool(task, allTools);
       setResponse(result);
+      
+      // Track analytics
+      analytics.trackAiSuggester(task);
     } catch (err) {
       setError('Failed to get a suggestion. Please try again.');
       console.error(err);
+      analytics.trackError('AI Suggester failed', 'GeminiToolSuggester');
     } finally {
       setIsLoading(false);
     }

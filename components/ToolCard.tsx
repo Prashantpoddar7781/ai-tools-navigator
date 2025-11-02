@@ -4,6 +4,7 @@ import type { LucideProps } from 'lucide-react';
 import { Plus, Info, ArrowUpRight, Check } from 'lucide-react';
 import type { Tool } from '../types';
 import { useStore } from '../hooks/useStore';
+import { analytics } from '../services/analytics';
 
 interface ToolCardProps {
   tool: Tool;
@@ -13,6 +14,9 @@ interface ToolCardProps {
 const ToolCard: React.FC<ToolCardProps> = ({ tool, categoryIcon: CategoryIcon }) => {
   const { stack, addToStack, setSelectedTool } = useStore();
   const isInStack = stack.some(t => t.name === tool.name);
+  
+  // Get category name from tool if available
+  const categoryName = (tool as any).subCategoryName || 'Unknown';
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col justify-between hover:border-cyan-500 transition-colors duration-300">
@@ -29,7 +33,12 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, categoryIcon: CategoryIcon })
       </div>
       <div className="flex gap-2 justify-end mt-auto">
         <button
-          onClick={() => addToStack(tool)}
+          onClick={() => {
+            addToStack(tool);
+            if (!isInStack) {
+              analytics.trackToolClick(tool.name, categoryName);
+            }
+          }}
           disabled={isInStack}
           className="flex-1 text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-md transition-colors duration-200 bg-slate-700 text-slate-300 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed hover:enabled:bg-cyan-600 hover:enabled:text-white"
         >
@@ -37,7 +46,10 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, categoryIcon: CategoryIcon })
           {isInStack ? 'In Stack' : 'Add'}
         </button>
         <button
-          onClick={() => setSelectedTool(tool)}
+          onClick={() => {
+            setSelectedTool(tool);
+            analytics.trackToolClick(tool.name, categoryName);
+          }}
           className="flex-1 text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-md transition-colors duration-200 bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white"
         >
           <Info size={16} /> Details
@@ -46,6 +58,10 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, categoryIcon: CategoryIcon })
           href={tool.link}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => {
+            analytics.trackToolClick(tool.name, categoryName);
+            analytics.trackButtonClick('Visit Tool Link', 'ToolCard');
+          }}
           className="flex-1 text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-md transition-colors duration-200 bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white"
         >
           <ArrowUpRight size={16} /> Visit
