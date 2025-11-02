@@ -7,7 +7,7 @@ import {
   Database, Lock, Eye, Search, MessageSquare, Calendar, Clock, Star, TrendingUp
 } from 'lucide-react';
 
-export const CALENDLY_LINK = "https://calendly.com/your-link";
+export const CALENDLY_LINK = "https://calendly.com/prashantpoddar29/30min";
 
 export const CATEGORIES: Category[] = [
     {
