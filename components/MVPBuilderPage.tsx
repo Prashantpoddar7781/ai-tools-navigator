@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Zap, Rocket, Check, MessageSquare, Clock, Shield, Star } from 'lucide-react';
 import { CALENDLY_LINK } from '../constants';
 import { apiService, type MvpRequestData } from '../services/apiService';
@@ -27,6 +27,24 @@ const MVPBuilderPage: React.FC = () => {
       [name]: value
     }));
   };
+
+  // Load Calendly widget script
+  useEffect(() => {
+    if (isCalendlyLinkSet && selectedOption === 'meeting') {
+      const script = document.createElement('script');
+      script.src = 'https://assets.calendly.com/assets/external/widget.js';
+      script.async = true;
+      document.body.appendChild(script);
+
+      return () => {
+        // Cleanup script when component unmounts
+        const existingScript = document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]');
+        if (existingScript) {
+          document.body.removeChild(existingScript);
+        }
+      };
+    }
+  }, [isCalendlyLinkSet, selectedOption]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,16 +258,31 @@ const MVPBuilderPage: React.FC = () => {
 
       <section className="text-center">
         {selectedOption === 'meeting' ? (
-          <div>
-        <a
-          href={isCalendlyLinkSet ? CALENDLY_LINK : undefined}
+          <div className="w-full max-w-4xl mx-auto">
+            {isCalendlyLinkSet ? (
+              <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700">
+                <div 
+                  className="calendly-inline-widget" 
+                  data-url={CALENDLY_LINK}
+                  style={{ minWidth: '320px', height: '700px', borderRadius: '8px' }}
+                />
+              </div>
+            ) : (
+              <div className="bg-slate-800/50 p-8 rounded-lg border border-slate-700">
+                <Calendar className="h-16 w-16 text-slate-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Schedule Your 15-Minute Meeting</h3>
+                <p className="text-slate-400 mb-6">Click the button below to book a quick call and discuss your requirements directly.</p>
+                <a
+                  href={CALENDLY_LINK}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-block text-xl font-bold py-4 px-10 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg ${isCalendlyLinkSet ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/50' : 'bg-slate-600 opacity-50 cursor-not-allowed'}`}
-        >
-              {isCalendlyLinkSet ? "Schedule Your 15-Minute Meeting" : "Booking Link Not Configured"}
-            </a>
-            <p className="text-slate-400 text-sm mt-3">Book a quick call to discuss your requirements in detail.</p>
+                  className="inline-block text-xl font-bold py-4 px-10 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/50"
+                >
+                  Open Calendar Booking
+                </a>
+                <p className="text-slate-500 text-sm mt-4">The meeting will be conducted via Google Meet</p>
+              </div>
+            )}
           </div>
         ) : (
           <div>
