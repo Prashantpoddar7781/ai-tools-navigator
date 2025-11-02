@@ -16,7 +16,9 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      'https://ideabazzar.com',
+      'https://youraibuddy.in',
+      'https://www.youraibuddy.in',
+      'https://ideabazzar.com', // Keep old domain for transition
       'https://www.ideabazzar.com',
       'http://localhost:3000',
       'http://localhost:3001',
