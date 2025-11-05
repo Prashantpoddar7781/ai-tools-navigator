@@ -4,6 +4,87 @@ import { CATEGORIES } from '../constants';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
+// Calculate price for MVP form - uses same logic as AI suggester
+export const calculatePrice = async (projectDescription: string): Promise<number> => {
+  if (!projectDescription.trim() || projectDescription.length < 10) {
+    return 9; // Minimum price for invalid/too short descriptions
+  }
+
+  const prompt = `
+You are an expert project estimator. Analyze the following project description and calculate the price using the EXACT same logic as our AI tool suggester.
+
+**Project Description:** "${projectDescription}"
+
+**Instructions:**
+1. Analyze the complexity and scope of the project - break it down into logical steps (3-7 steps)
+2. Estimate the time required for each step (in hours, be realistic)
+3. Calculate TOTAL time range (minimum to maximum hours) by adding all step times
+4. Calculate price using formula: (Average Hours × ₹20) - ₹1
+   - Example: If time range is 8-12 hours, average is 10 hours, price = (10 × 20) - 1 = 199
+   - Example: If time range is 4-6 hours, average is 5 hours, price = (5 × 20) - 1 = 99
+5. IMPORTANT: Price must be between ₹9-₹499
+   - If calculated price < ₹9, return ₹9
+   - If calculated price > ₹499, return ₹499
+6. For random/gibberish text like "vdvcdvhcdhb", return ₹9 (minimum)
+7. For very simple projects (1-2 hours), return ₹9-₹19
+8. For medium projects (3-5 hours), return ₹59-₹99
+9. For complex projects (6-10 hours), return ₹119-₹199
+10. For very complex projects (11+ hours), return ₹219-₹499 (capped at ₹499)
+
+**CRITICAL: Consistency**
+- For similar tasks, provide consistent time estimates (within 1-2 hours range)
+- "create clothing app" should return the SAME price as if entered in AI tool suggester
+- "create CLOTHING app" should return the SAME price as "create clothing app"
+
+**Response Format:**
+Return ONLY the price as a number (no currency symbol, no text, just the number).
+
+**Examples:**
+- "create a simple landing page" → 19
+- "create a clothing app" → 199 (same as AI suggester)
+- "create CLOTHING app" → 199 (same as above)
+- "build an e-commerce platform with payment" → 399
+- "vdvcdvhcdhb" (gibberish) → 9
+- "create a website" → 99
+`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    const responseText = response.text.trim();
+    
+    // Extract number from response (handle cases where AI returns text)
+    const priceMatch = responseText.match(/\d+/);
+    if (priceMatch) {
+      let price = parseInt(priceMatch[0]);
+      
+      // Ensure price is within bounds
+      if (price < 9) price = 9;
+      if (price > 499) price = 499;
+      
+      return price;
+    }
+
+    // Fallback: check if description is gibberish (very short or random characters)
+    const isGibberish = projectDescription.length < 10 || 
+                       /^[^a-zA-Z0-9\s]{5,}$/.test(projectDescription) ||
+                       projectDescription.split(' ').length < 2;
+    
+    return isGibberish ? 9 : 99; // Default to ₹99 for valid descriptions that failed parsing
+  } catch (error) {
+    console.error("Error calculating price:", error);
+    // Fallback pricing based on description length
+    const descLength = projectDescription.length;
+    if (descLength < 20) return 9;
+    if (descLength < 50) return 49;
+    if (descLength < 100) return 99;
+    return 199;
+  }
+};
+
 export const suggestTool = async (taskDescription: string, allTools: Tool[]): Promise<string> => {
   // Create a more structured tool list with categories
   const toolList = allTools.map(tool => {

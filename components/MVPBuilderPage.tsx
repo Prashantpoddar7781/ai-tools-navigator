@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Zap, Rocket, Check, MessageSquare, Clock, Shield, Star, CreditCard } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Calendar, Zap, Rocket, Check, MessageSquare, Clock, Shield, Star, CreditCard, Loader2 } from 'lucide-react';
 import { CALENDLY_LINK } from '../constants';
 import { apiService, type MvpRequestData } from '../services/apiService';
 import { analytics } from '../services/analytics';
 import { paymentService } from '../services/paymentService';
+import { calculatePrice } from '../services/geminiService';
 
 const MVPBuilderPage: React.FC = () => {
   const isCalendlyLinkSet = CALENDLY_LINK !== "https://calendly.com/your-link";
@@ -13,6 +14,9 @@ const MVPBuilderPage: React.FC = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [savedRequestId, setSavedRequestId] = useState<string | null>(null);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+  const priceCalculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,7 +25,6 @@ const MVPBuilderPage: React.FC = () => {
     targetAudience: '',
     uniqueSellingPoints: '',
     features: '',
-    budget: '₹9-₹99',
     timeline: 'flexible'
   });
 
@@ -31,6 +34,35 @@ const MVPBuilderPage: React.FC = () => {
       ...prev,
       [name]: value
     }));
+
+    // Calculate price when project description changes
+    if (name === 'projectDescription') {
+      // Clear previous timeout
+      if (priceCalculationTimeoutRef.current) {
+        clearTimeout(priceCalculationTimeoutRef.current);
+      }
+
+      // Set loading state for short descriptions
+      if (value.trim().length < 10) {
+        setCalculatedPrice(9); // Minimum price
+        setIsCalculatingPrice(false);
+        return;
+      }
+
+      // Debounce price calculation (wait 1 second after user stops typing)
+      setIsCalculatingPrice(true);
+      priceCalculationTimeoutRef.current = setTimeout(async () => {
+        try {
+          const price = await calculatePrice(value);
+          setCalculatedPrice(price);
+        } catch (error) {
+          console.error('Error calculating price:', error);
+          setCalculatedPrice(99); // Default fallback
+        } finally {
+          setIsCalculatingPrice(false);
+        }
+      }, 1000);
+    }
   };
 
   // Load Calendly widget script
@@ -51,6 +83,15 @@ const MVPBuilderPage: React.FC = () => {
     }
   }, [isCalendlyLinkSet, selectedOption]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (priceCalculationTimeoutRef.current) {
+        clearTimeout(priceCalculationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -66,7 +107,7 @@ const MVPBuilderPage: React.FC = () => {
         targetAudience: formData.targetAudience,
         uniqueSellingPoints: formData.uniqueSellingPoints,
         features: formData.features ? formData.features.split(',').map(f => f.trim()) : [],
-        budget: formData.budget,
+        budget: calculatedPrice ? `₹${calculatedPrice}` : '₹9',
         timeline: formData.timeline,
         communicationMethod: selectedOption
       };
@@ -77,7 +118,7 @@ const MVPBuilderPage: React.FC = () => {
       
       // Track analytics
       analytics.trackMvpSubmission('description', {
-        budget: formData.budget,
+        budget: calculatedPrice ? `₹${calculatedPrice}` : '₹9',
         timeline: formData.timeline,
       });
       
@@ -101,8 +142,8 @@ const MVPBuilderPage: React.FC = () => {
     setPaymentStatus('idle');
 
     try {
-      // Calculate price from budget
-      const amount = paymentService.calculatePrice(formData.budget);
+      // Use calculated price
+      const amount = calculatedPrice || 9;
       
       // Create Razorpay order
       const orderData = await paymentService.createOrder(amount, savedRequestId);
@@ -126,9 +167,9 @@ const MVPBuilderPage: React.FC = () => {
             targetAudience: '',
             uniqueSellingPoints: '',
             features: '',
-            budget: '₹9-₹99',
             timeline: 'flexible'
           });
+          setCalculatedPrice(null);
           setSavedRequestId(null);
           
           // Track payment success
@@ -378,7 +419,7 @@ const MVPBuilderPage: React.FC = () => {
                         ? 'Processing Payment...' 
                         : paymentStatus === 'success'
                         ? '✅ Payment Successful!'
-                        : `Pay ₹${paymentService.calculatePrice(formData.budget)}`}
+                        : `Pay ₹${calculatedPrice || 9}`}
                     </button>
                     <p className="text-green-300 text-xs mt-2 text-center">
                       Secure payment via Razorpay • UPI, Cards, Wallets accepted
@@ -441,15 +482,41 @@ const MVPBuilderPage: React.FC = () => {
                   className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 />
                 
-                <textarea
-                  name="projectDescription"
-                  placeholder="Project Description * - Tell us about your project in detail. What do you want to build? What features should it have? Be as specific as possible..."
-                  value={formData.projectDescription}
-                  onChange={handleInputChange}
-                  required
-                  rows={4}
-                  className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 resize-none"
-                />
+                <div>
+                  <textarea
+                    name="projectDescription"
+                    placeholder="Project Description * - Tell us about your project in detail. What do you want to build? What features should it have? Be as specific as possible..."
+                    value={formData.projectDescription}
+                    onChange={handleInputChange}
+                    required
+                    rows={4}
+                    className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 resize-none"
+                  />
+                  {/* Dynamic Price Display */}
+                  {formData.projectDescription.trim().length > 0 && (
+                    <div className="mt-2 p-3 bg-gradient-to-r from-green-900/50 to-emerald-900/50 border border-green-500/50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">💰</span>
+                          <div>
+                            <p className="text-green-400 text-sm font-medium">Estimated Price:</p>
+                            {isCalculatingPrice ? (
+                              <div className="flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin text-green-400" />
+                                <span className="text-white font-bold">Calculating...</span>
+                              </div>
+                            ) : (
+                              <p className="text-white font-bold text-lg">₹{calculatedPrice || 9}</p>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-green-300 text-xs italic">
+                          Price calculated based on your project description
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
                 <textarea
                   name="targetAudience"
@@ -478,34 +545,18 @@ const MVPBuilderPage: React.FC = () => {
                   className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 />
                 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <select
-                    name="budget"
-                    value={formData.budget}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                  >
-                    <option value="₹9-₹99">₹9-₹99</option>
-                    <option value="₹100-₹199">₹100-₹199</option>
-                    <option value="₹200-₹299">₹200-₹299</option>
-                    <option value="₹300-₹399">₹300-₹399</option>
-                    <option value="₹400-₹499">₹400-₹499</option>
-                  </select>
-                  
-                  <select
-                    name="timeline"
-                    value={formData.timeline}
-                    onChange={handleInputChange}
-                    className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                  >
-                    <option value="ASAP">ASAP</option>
-                    <option value="1 week">1 week</option>
-                    <option value="2 weeks">2 weeks</option>
-                    <option value="1 month">1 month</option>
-                    <option value="flexible">Flexible</option>
-                  </select>
-                </div>
+                <select
+                  name="timeline"
+                  value={formData.timeline}
+                  onChange={handleInputChange}
+                  className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                >
+                  <option value="ASAP">ASAP</option>
+                  <option value="1 week">1 week</option>
+                  <option value="2 weeks">2 weeks</option>
+                  <option value="1 month">1 month</option>
+                  <option value="flexible">Flexible</option>
+                </select>
               </div>
               
               <button
