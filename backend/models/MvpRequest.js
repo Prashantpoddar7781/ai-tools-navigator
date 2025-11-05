@@ -46,8 +46,16 @@ const mvpRequestSchema = new mongoose.Schema({
   // Budget and Timeline
   budget: {
     type: String,
-    enum: ['₹9-₹99', '₹100-₹199', '₹200-₹299', '₹300-₹399', '₹400-₹499'],
-    required: true
+    required: true,
+    trim: true,
+    // Accept any price string (e.g., '₹179', '₹199', etc.) - no longer restricted to ranges
+    validate: {
+      validator: function(value) {
+        // Allow any string that starts with ₹ followed by a number
+        return /^₹\d+$/.test(value) || /^₹\d+-₹\d+$/.test(value);
+      },
+      message: 'Budget must be in format ₹[number] or ₹[number]-₹[number]'
+    }
   },
   timeline: {
     type: String,
