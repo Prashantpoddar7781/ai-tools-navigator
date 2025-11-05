@@ -17,6 +17,8 @@ const MVPBuilderPage: React.FC = () => {
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const priceCalculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const priceCalculationAbortControllerRef = useRef<AbortController | null>(null);
+  const priceCacheRef = useRef<Map<string, number>>(new Map());
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,31 +39,60 @@ const MVPBuilderPage: React.FC = () => {
 
     // Calculate price when project description changes
     if (name === 'projectDescription') {
-      // Clear previous timeout
+      // Cancel previous calculation
       if (priceCalculationTimeoutRef.current) {
         clearTimeout(priceCalculationTimeoutRef.current);
       }
+      if (priceCalculationAbortControllerRef.current) {
+        priceCalculationAbortControllerRef.current.abort();
+      }
 
+      const trimmedValue = value.trim();
+      
       // Set loading state for short descriptions
-      if (value.trim().length < 10) {
+      if (trimmedValue.length < 10) {
         setCalculatedPrice(9); // Minimum price
         setIsCalculatingPrice(false);
         return;
       }
 
-      // Debounce price calculation (wait 1 second after user stops typing)
+      // Check cache first
+      const cacheKey = trimmedValue.toLowerCase();
+      if (priceCacheRef.current.has(cacheKey)) {
+        const cachedPrice = priceCacheRef.current.get(cacheKey)!;
+        setCalculatedPrice(cachedPrice);
+        setIsCalculatingPrice(false);
+        return;
+      }
+
+      // Debounce price calculation (wait 1.5 seconds after user stops typing)
       setIsCalculatingPrice(true);
       priceCalculationTimeoutRef.current = setTimeout(async () => {
+        // Create new AbortController for this request
+        const abortController = new AbortController();
+        priceCalculationAbortControllerRef.current = abortController;
+
         try {
-          const price = await calculatePrice(value);
-          setCalculatedPrice(price);
-        } catch (error) {
-          console.error('Error calculating price:', error);
-          setCalculatedPrice(99); // Default fallback
+          const price = await calculatePrice(trimmedValue);
+          
+          // Only update if request wasn't cancelled
+          if (!abortController.signal.aborted) {
+            // Cache the result
+            priceCacheRef.current.set(cacheKey, price);
+            setCalculatedPrice(price);
+          }
+        } catch (error: any) {
+          // Only update if request wasn't cancelled and it's not an abort error
+          if (!abortController.signal.aborted && error?.name !== 'AbortError') {
+            console.error('Error calculating price:', error);
+            // Don't set fallback price - keep previous value
+          }
         } finally {
-          setIsCalculatingPrice(false);
+          if (!abortController.signal.aborted) {
+            setIsCalculatingPrice(false);
+          }
         }
-      }, 1000);
+      }, 1500);
     }
   };
 
@@ -83,11 +114,14 @@ const MVPBuilderPage: React.FC = () => {
     }
   }, [isCalendlyLinkSet, selectedOption]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeout and abort controller on unmount
   useEffect(() => {
     return () => {
       if (priceCalculationTimeoutRef.current) {
         clearTimeout(priceCalculationTimeoutRef.current);
+      }
+      if (priceCalculationAbortControllerRef.current) {
+        priceCalculationAbortControllerRef.current.abort();
       }
     };
   }, []);
