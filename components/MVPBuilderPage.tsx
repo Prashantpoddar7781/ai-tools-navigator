@@ -146,7 +146,9 @@ const MVPBuilderPage: React.FC = () => {
         communicationMethod: selectedOption
       };
 
+      console.log('Submitting MVP request:', mvpRequestData);
       const response = await apiService.submitMvpRequest(mvpRequestData);
+      console.log('MVP request submitted successfully:', response);
       setSubmitStatus('success');
       setSavedRequestId(response.requestId);
       
@@ -158,9 +160,22 @@ const MVPBuilderPage: React.FC = () => {
       
       // Don't reset form yet - wait for payment
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit MVP request:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        response: error?.response
+      });
+      
+      // Show more specific error message
+      const errorMessage = error?.message || 'Failed to submit request. Please check your internet connection and try again.';
       setSubmitStatus('error');
+      
+      // Log for debugging
+      if (errorMessage.includes('CORS') || errorMessage.includes('network')) {
+        console.error('Network/CORS error - check backend URL and CORS settings');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -480,7 +495,10 @@ const MVPBuilderPage: React.FC = () => {
               {submitStatus === 'error' && (
                 <div className="mb-4 p-4 bg-red-900/50 border border-red-500 rounded-lg">
                   <p className="text-red-400 font-semibold">❌ Failed to submit request</p>
-                  <p className="text-red-300 text-sm">Please try again or contact us directly.</p>
+                  <p className="text-red-300 text-sm mb-2">Please try again or contact us directly.</p>
+                  <p className="text-red-400 text-xs">
+                    💡 Check browser console (F12) for detailed error information
+                  </p>
                 </div>
               )}
 

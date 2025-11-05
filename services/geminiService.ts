@@ -33,33 +33,59 @@ export const calculatePrice = async (projectDescription: string): Promise<number
     
     // Extract price from response using the same format as AI suggester
     // Format: "### 💰 **Our Service Price: ₹[number]**"
-    const priceMatch = responseText.match(/\*\*Our Service Price:\*\*\s*₹?(\d+)/i);
+    // Try multiple patterns to catch all variations
+    let priceMatch = responseText.match(/\*\*Our Service Price:\*\*\s*₹?(\d+)/i);
+    if (!priceMatch) {
+      priceMatch = responseText.match(/Our Service Price[:\s]*₹?(\d+)/i);
+    }
+    if (!priceMatch) {
+      priceMatch = responseText.match(/Service Price[:\s]*₹?(\d+)/i);
+    }
+    if (!priceMatch) {
+      priceMatch = responseText.match(/💰[^\d]*₹?(\d+)/i);
+    }
+    
     if (priceMatch && priceMatch[1]) {
       const price = parseInt(priceMatch[1]);
       if (!isNaN(price) && price >= 9 && price <= 499) {
+        console.log(`✅ Extracted price from suggestTool: ₹${price} for "${trimmed}"`);
         return price;
       }
     }
     
-    // Alternative pattern: look for "₹[number]" after "Service Price"
-    const altMatch = responseText.match(/Service Price[:\s]*₹?(\d+)/i);
-    if (altMatch && altMatch[1]) {
-      const price = parseInt(altMatch[1]);
-      if (!isNaN(price) && price >= 9 && price <= 499) {
-        return price;
+    // Fallback: find any number between 9-499 in the response (prefer numbers near "price" keywords)
+    const priceKeywords = ['price', '₹', 'service', 'cost'];
+    const lines = responseText.split('\n');
+    for (const line of lines) {
+      const lowerLine = line.toLowerCase();
+      if (priceKeywords.some(keyword => lowerLine.includes(keyword))) {
+        const numbers = line.match(/\d+/g);
+        if (numbers) {
+          for (const numStr of numbers) {
+            const num = parseInt(numStr);
+            if (num >= 9 && num <= 499) {
+              console.log(`✅ Extracted price from line with keyword: ₹${num} for "${trimmed}"`);
+              return num;
+            }
+          }
+        }
       }
     }
     
-    // Fallback: find any number between 9-499 in the response
+    // Final fallback: find any number between 9-499
     const numbers = responseText.match(/\d+/g);
     if (numbers) {
       for (const numStr of numbers) {
         const num = parseInt(numStr);
         if (num >= 9 && num <= 499) {
+          console.log(`✅ Extracted price (fallback): ₹${num} for "${trimmed}"`);
           return num;
         }
       }
     }
+    
+    console.warn(`⚠️ Could not extract price from suggestTool response for "${trimmed}"`);
+    console.log('Response preview:', responseText.substring(0, 500));
     
     // If still no price found, use fallback based on description
     const lowerDesc = trimmed.toLowerCase();
