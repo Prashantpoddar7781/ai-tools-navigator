@@ -4,7 +4,7 @@ import { CATEGORIES } from '../constants';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
-// Calculate price for MVP form - uses same logic as AI suggester
+// Calculate price for MVP form - uses EXACT same logic as AI suggester by calling suggestTool
 export const calculatePrice = async (projectDescription: string): Promise<number> => {
   const trimmed = projectDescription.trim();
   
@@ -22,50 +22,35 @@ export const calculatePrice = async (projectDescription: string): Promise<number
     return 9;
   }
 
-  // Use the SAME prompt structure as suggestTool for consistency
-  const prompt = `
-You are an expert AI workflow consultant. Analyze the following project description and calculate the price using the EXACT same method as when creating a workflow.
-
-**User's Task:** "${trimmed}"
-
-**Instructions:**
-1. Analyze the task and break it down into logical steps (3-7 steps)
-2. Estimate the time required for each step (in hours, be realistic and consistent)
-3. Calculate TOTAL time range (minimum to maximum hours) by adding all step times
-4. Calculate price using formula: (Average Hours × ₹20) - ₹1
-   - Example: If time range is 8-12 hours, average is 10 hours, price = (10 × 20) - 1 = 199
-   - Example: If time range is 4-6 hours, average is 5 hours, price = (5 × 20) - 1 = 99
-   - Example: If time range is 20-25 hours, average is 22.5 hours, price = (22.5 × 20) - 1 = 449 (capped at 499)
-5. IMPORTANT: Price must be between ₹9-₹499
-   - If calculated price < ₹9, return ₹9
-   - If calculated price > ₹499, return ₹499
-
-**CRITICAL CONSISTENCY REQUIREMENTS:**
-- For "create clothing app" or "create CLOTHING app", use the SAME time estimate as the AI tool suggester (typically 8-12 hours = ₹199)
-- For similar tasks, provide consistent time estimates (within 1-2 hours range)
-- Be realistic about complexity - a clothing app is a medium-complexity project
-
-**Response Format:**
-Return ONLY the price as a number (no currency symbol, no text, no explanation, just the number).
-
-**Examples:**
-- "create clothing app" → 199
-- "create CLOTHING app" → 199
-- "create a simple landing page" → 19
-- "build an e-commerce platform with payment integration" → 399
-- "create a website" → 99
-`;
-
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-
-    const responseText = response.text.trim();
+    // Import allTools here to avoid circular dependency
+    const allTools = CATEGORIES.flatMap(cat => 
+      cat.subCategories.flatMap(sub => sub.tools)
+    );
     
-    // Extract the first number from response (most likely the price)
-    // Try to find number that's between 9-499
+    // Call the EXACT same function as AI suggester
+    const responseText = await suggestTool(trimmed, allTools);
+    
+    // Extract price from response using the same format as AI suggester
+    // Format: "### 💰 **Our Service Price: ₹[number]**"
+    const priceMatch = responseText.match(/\*\*Our Service Price:\*\*\s*₹?(\d+)/i);
+    if (priceMatch && priceMatch[1]) {
+      const price = parseInt(priceMatch[1]);
+      if (!isNaN(price) && price >= 9 && price <= 499) {
+        return price;
+      }
+    }
+    
+    // Alternative pattern: look for "₹[number]" after "Service Price"
+    const altMatch = responseText.match(/Service Price[:\s]*₹?(\d+)/i);
+    if (altMatch && altMatch[1]) {
+      const price = parseInt(altMatch[1]);
+      if (!isNaN(price) && price >= 9 && price <= 499) {
+        return price;
+      }
+    }
+    
+    // Fallback: find any number between 9-499 in the response
     const numbers = responseText.match(/\d+/g);
     if (numbers) {
       for (const numStr of numbers) {
@@ -74,28 +59,21 @@ Return ONLY the price as a number (no currency symbol, no text, no explanation, 
           return num;
         }
       }
-      // If no number in range, use the first number and clamp it
-      const firstNum = parseInt(numbers[0]);
-      if (!isNaN(firstNum)) {
-        if (firstNum < 9) return 9;
-        if (firstNum > 499) return 499;
-        return firstNum;
-      }
     }
-
-    // If no number found, check description for complexity clues
+    
+    // If still no price found, use fallback based on description
     const lowerDesc = trimmed.toLowerCase();
     if (lowerDesc.includes('simple') || lowerDesc.includes('basic')) {
       return 19;
     }
     if (lowerDesc.includes('clothing') || lowerDesc.includes('app') || lowerDesc.includes('ecommerce')) {
-      return 199; // Default for app creation
+      return 199;
     }
     if (lowerDesc.includes('platform') || lowerDesc.includes('complex')) {
       return 399;
     }
     
-    // Default fallback based on length
+    // Default fallback
     if (trimmed.length < 30) return 49;
     if (trimmed.length < 60) return 99;
     return 199;
@@ -104,7 +82,7 @@ Return ONLY the price as a number (no currency symbol, no text, no explanation, 
     // Fallback pricing based on description
     const lowerDesc = trimmed.toLowerCase();
     if (lowerDesc.includes('clothing') || lowerDesc.includes('app')) {
-      return 199; // Consistent with AI suggester
+      return 199;
     }
     if (trimmed.length < 30) return 49;
     if (trimmed.length < 60) return 99;
